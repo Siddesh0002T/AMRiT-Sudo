@@ -66,7 +66,10 @@ class _IdentitySettingsDialogState extends State<IdentitySettingsDialog> {
           onPressed: () async {
             if (!_formKey.currentState!.validate()) return;
             final identity = Provider.of<StudentIdentityService>(context, listen: false);
-            await identity.updateIdentity(_rollController.text, _nameController.text);
+            await identity.updateIdentity(
+              newRollNumber: _rollController.text,
+              newName: _nameController.text,
+            );
             if (context.mounted) Navigator.pop(context);
           },
           child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),

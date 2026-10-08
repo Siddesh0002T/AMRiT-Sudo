@@ -97,6 +97,45 @@ class AuthService extends ChangeNotifier {
     return true;
   }
 
+  Future<bool> loginOrRegisterOAuth({
+    required String email,
+    required String name,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final db = await DatabaseHelper.instance.database;
+
+    final results = await db.query(
+      'teachers',
+      where: 'username = ?',
+      whereArgs: [cleanEmail],
+    );
+
+    if (results.isNotEmpty) {
+      _currentTeacher = Teacher.fromMap(results.first);
+    } else {
+      final salt = _generateSalt();
+      final passwordHash = _hashPassword(cleanEmail, salt);
+      final teacher = Teacher(
+        username: cleanEmail,
+        passwordHash: passwordHash,
+        salt: salt,
+        name: name,
+      );
+      final id = await db.insert('teachers', teacher.toMap());
+      _currentTeacher = Teacher(
+        id: id,
+        username: teacher.username,
+        passwordHash: teacher.passwordHash,
+        salt: teacher.salt,
+        name: teacher.name,
+      );
+    }
+
+    await _persistSession(_currentTeacher!);
+    notifyListeners();
+    return true;
+  }
+
   Future<void> _persistSession(Teacher teacher) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsLoggedIn, true);

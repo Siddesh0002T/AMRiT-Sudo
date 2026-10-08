@@ -1,0 +1,12 @@
+[
+    {
+        "timestamp": "2026-10-09 00:11:32",
+        "type": "EARLY_QUIT",
+        "student": "Kavita Patel",
+        "roll": "23CE999",
+        "to": "parent.kavita@gmail.com",
+        "title": "\u26a0\ufe0f URGENT: Kavita Patel Left Class Early (Early Quit Alert)",
+        "body": "Dear Parent,\n\nWARNING: Your ward Kavita Patel (Roll No: 23CE999) has disconnected prematurely from the scheduled session before official dismissal at 2026-10-09 00:11:32.\n\nAlert: EARLY QUIT RECORDED.\nPlease contact faculty if this was unplanned.\n\nInstitutional Security System.\n\nAdditional Details: Student disconnected prematurely from class mesh session.",
+        "mail_sent": false
+    }
+]

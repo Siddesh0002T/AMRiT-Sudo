@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/mysql_api_service.dart';
+import '../../widgets/server_config_dialog.dart';
+import '../admin/admin_dashboard_screen.dart';
 import '../home_dashboard_screen.dart';
-import 'signup_screen.dart';
+import '../parent/parent_portal_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,13 +15,24 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _staffUserCtrl = TextEditingController();
+  final TextEditingController _staffPassCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+
   bool _isLoading = false;
   String? _errorMessage;
 
-  void _handleLogin() async {
+  @override
+  void dispose() {
+    _staffUserCtrl.dispose();
+    _staffPassCtrl.dispose();
+    super.dispose();
+  }
+
+  // ==========================================
+  // STAFF LOGIN (Username & Password created by Admin)
+  // ==========================================
+  Future<void> _handleStaffLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -27,10 +41,24 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      final username = _staffUserCtrl.text.trim();
+      final password = _staffPassCtrl.text.trim();
+
+      // Check MySQL API
+      final res = await MySqlApiService.instance.staffLogin(
+        username: username,
+        password: password,
+      );
+
+      if (!mounted) return;
+
       final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.login(
-        username: _usernameController.text,
-        password: _passwordController.text,
+      final staffName = res['user']?['name'] ?? username;
+      final staffEmail = res['user']?['email'] ?? '$username@institution.edu';
+
+      await authService.loginOrRegisterOAuth(
+        email: staffEmail,
+        name: staffName,
       );
 
       if (mounted) {
@@ -39,43 +67,186 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
-    } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  // ==========================================
+  // ADMIN LOGIN (Username: admin, Password: admin)
+  // ==========================================
+  void _showAdminLoginDialog() {
+    final userCtrl = TextEditingController(text: 'admin');
+    final passCtrl = TextEditingController(text: 'admin');
+    final formKey = GlobalKey<FormState>();
+    String? adminError;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.admin_panel_settings_rounded, color: Colors.purpleAccent, size: 28),
+              SizedBox(width: 10),
+              Text('Admin Portal Login', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.purpleAccent.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.purpleAccent.withOpacity(0.3)),
+                  ),
+                  child: const Text(
+                    'Default Admin Credentials:\nUsername: "admin" | Password: "admin"',
+                    style: TextStyle(color: Colors.purpleAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                if (adminError != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.redAccent),
+                    ),
+                    child: Text(adminError!, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  ),
+                TextFormField(
+                  controller: userCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Admin Username',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.person, color: Colors.purpleAccent),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Enter username' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: passCtrl,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Admin Password',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.lock, color: Colors.purpleAccent),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Enter password' : null,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.purpleAccent),
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+
+                final u = userCtrl.text.trim();
+                final p = passCtrl.text.trim();
+
+                try {
+                  final authRes = await MySqlApiService.instance.adminLogin(
+                    username: u,
+                    password: p,
+                  );
+
+                  if (authRes['success'] == true) {
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (mounted) {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+                      );
+                    }
+                  } else {
+                    setDialogState(() {
+                      adminError = authRes['error'] ?? 'Invalid credentials. Required: admin / admin';
+                    });
+                  }
+                } catch (e) {
+                  setDialogState(() {
+                    adminError = 'Invalid credentials. Use admin / admin';
+                  });
+                }
+              },
+              child: const Text('Login as Admin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Server IP / Hotspot Settings',
+            icon: const Icon(Icons.wifi_tethering_rounded, color: Color(0xFF38BDF8)),
+            onPressed: () => ServerConfigDialog.show(context),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // App Logo
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: const Color(0xFF3B82F6).withOpacity(0.15),
                     shape: BoxShape.circle,
                     border: Border.all(color: const Color(0xFF3B82F6), width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF3B82F6).withOpacity(0.3),
+                        blurRadius: 24,
+                      ),
+                    ],
                   ),
-                  child: const Icon(
-                    Icons.hub_rounded,
-                    size: 60,
-                    color: Color(0xFF3B82F6),
-                  ),
+                  child: const Icon(Icons.hub_rounded, size: 54, color: Color(0xFF38BDF8)),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 const Text(
-                  'BlueMesh Staff',
+                  'BlueMesh Staff & Admin',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -83,114 +254,168 @@ class _LoginScreenState extends State<LoginScreen> {
                     letterSpacing: 1.1,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
-                  'Offline Smart Attendance Portal',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[400],
-                  ),
+                  'Institutional Portal • MySQL & phpMyAdmin Sync',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[400]),
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: 32),
 
                 if (_errorMessage != null)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin: const EdgeInsets.only(bottom: 20),
                     decoration: BoxDecoration(
                       color: Colors.red[900]?.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.redAccent),
                     ),
-                    child: Text(
-                      _errorMessage!,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                    ),
+                    child: Text(_errorMessage!, style: const TextStyle(color: Colors.white, fontSize: 13)),
                   ),
 
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _usernameController,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Username',
-                          labelStyle: const TextStyle(color: Colors.grey),
-                          prefixIcon: const Icon(Icons.person, color: Color(0xFF3B82F6)),
-                          filled: true,
-                          fillColor: const Color(0xFF1E293B),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
+                // ── STAFF LOGIN FORM ──
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Staff / Faculty Sign In',
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                        validator: (v) => v == null || v.isEmpty ? 'Enter username' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          labelStyle: const TextStyle(color: Colors.grey),
-                          prefixIcon: const Icon(Icons.lock, color: Color(0xFF3B82F6)),
-                          filled: true,
-                          fillColor: const Color(0xFF1E293B),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Enter the username & password created by Admin:',
+                          style: TextStyle(color: Colors.white54, fontSize: 12),
                         ),
-                        validator: (v) => v == null || v.isEmpty ? 'Enter password' : null,
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3B82F6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _staffUserCtrl,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'Staff Username (e.g. staff1)',
+                            hintStyle: TextStyle(color: Colors.grey[600]),
+                            filled: true,
+                            fillColor: const Color(0xFF0F172A),
+                            prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF38BDF8)),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          ),
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Enter username' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _staffPassCtrl,
+                          obscureText: true,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'Staff Password',
+                            hintStyle: TextStyle(color: Colors.grey[600]),
+                            filled: true,
+                            fillColor: const Color(0xFF0F172A),
+                            prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF38BDF8)),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          ),
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Enter password' : null,
+                        ),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _handleStaffLogin,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3B82F6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
+                            child: _isLoading
+                                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Text('Login as Staff', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                           ),
-                          child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text(
-                                  'Login',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // ── BUTTON 2: ADMIN LOGIN (admin / admin) ──
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: _isLoading ? null : _showAdminLoginDialog,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.purpleAccent, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      backgroundColor: Colors.purpleAccent.withOpacity(0.08),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.shield_rounded, color: Colors.purpleAccent, size: 20),
+                        SizedBox(width: 8),
+                        Text('Admin Login (admin / admin)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // ── BUTTON 3: PARENT LIVE PORTAL ──
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ParentPortalScreen()));
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      backgroundColor: const Color(0xFF10B981).withOpacity(0.08),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.family_restroom_rounded, color: Color(0xFF10B981), size: 20),
+                        SizedBox(width: 8),
+                        Text('Open Parent Live Portal', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // Local MySQL Connection Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.storage_rounded, color: Color(0xFF00FF88), size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Database: MySQL / phpMyAdmin Local Network',
+                        style: TextStyle(color: Colors.grey[400], fontSize: 12),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Don't have an account?", style: TextStyle(color: Colors.grey[400])),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const SignupScreen()),
-                        );
-                      },
-                      child: const Text(
-                        'Sign Up',
-                        style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),

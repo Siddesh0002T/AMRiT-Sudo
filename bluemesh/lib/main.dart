@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'core/config/env_config.dart';
 import 'core/theme/theme_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home_dashboard_screen.dart';
@@ -9,6 +10,7 @@ import 'services/ble_host_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EnvConfig.instance.init();
   final authService = AuthService();
   final hasSession = await authService.checkSession();
 

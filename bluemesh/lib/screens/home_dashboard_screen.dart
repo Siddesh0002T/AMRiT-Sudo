@@ -5,9 +5,13 @@ import '../../core/theme/theme_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/student_service.dart';
 import 'auth/login_screen.dart';
+import 'chat/chat_with_class_screen.dart';
+import 'guard/guard_patrol_monitor_screen.dart';
+import 'parent/parent_portal_screen.dart';
 import 'reports/session_history_screen.dart';
 import 'session/start_session_dialog.dart';
 import 'student/student_list_screen.dart';
+import '../../widgets/server_config_dialog.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -78,6 +82,33 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         ),
         actions: [
           IconButton(
+            tooltip: 'MySQL Server IP / Hotspot',
+            icon: const Icon(Icons.wifi_tethering_rounded, color: Color(0xFF38BDF8)),
+            onPressed: () => ServerConfigDialog.show(context),
+          ),
+          IconButton(
+            tooltip: 'Parent Live Portal',
+            icon: const Icon(Icons.family_restroom_rounded, color: Color(0xFF10B981)),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ParentPortalScreen())),
+          ),
+          IconButton(
+            tooltip: 'Chat with Class (Gemini AI)',
+            icon: const Icon(Icons.auto_awesome, color: Color(0xFF38BDF8)),
+            onPressed: () async {
+              final students = await _studentService.getAllStudents();
+              if (context.mounted) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatWithClassScreen(
+                      students: students,
+                      userRole: 'Staff',
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+          IconButton(
             tooltip: isDark ? 'Light Mode' : 'Dark Mode',
             icon: Icon(isDark
                 ? Icons.light_mode_outlined
@@ -107,14 +138,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
             children: [
               // ── Hero Banner ──
               _buildHeroBanner(context, teacherName, isDark),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
+
+              // ── Gemini AI Banner ──
+              _buildAiAssistantCard(context),
+              const SizedBox(height: 24),
 
               // ── Stats Row ──
               _buildStatsRow(context, isDark),
               const SizedBox(height: 28),
 
               Text(
-                'Management & Sessions',
+                'Management & Tracking Hub',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -135,7 +170,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                   _buildDashboardCard(
                     context,
                     title: 'Start Session',
-                    subtitle: 'Broadcast host beacon & track live presence',
+                    subtitle: 'Broadcast host beacon & track presence',
                     icon: Icons.wifi_tethering_rounded,
                     accentColor: const Color(0xFF10B981),
                     onTap: () async {
@@ -149,7 +184,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                   _buildDashboardCard(
                     context,
                     title: 'Student Roster',
-                    subtitle: 'Add, view & manage enrolled students',
+                    subtitle: 'Manage students, parents & emails',
                     icon: Icons.badge_rounded,
                     accentColor: const Color(0xFF38BDF8),
                     onTap: () async {
@@ -163,8 +198,36 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                   ),
                   _buildDashboardCard(
                     context,
+                    title: 'Guards & Patrol',
+                    subtitle: 'Track explore zones & guard deviations',
+                    icon: Icons.security_rounded,
+                    accentColor: Colors.orangeAccent,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const GuardPatrolMonitorScreen()),
+                      );
+                    },
+                  ),
+                  _buildDashboardCard(
+                    context,
+                    title: 'Parent Portal',
+                    subtitle: 'Student In/Out & Early Quit alerts',
+                    icon: Icons.family_restroom_rounded,
+                    accentColor: const Color(0xFF10B981),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ParentPortalScreen()),
+                      );
+                    },
+                  ),
+                  _buildDashboardCard(
+                    context,
                     title: 'Session History',
-                    subtitle: 'Attendance logs & analytics',
+                    subtitle: 'MySQL attendance logs & analytics',
                     icon: Icons.analytics_rounded,
                     accentColor: const Color(0xFFF59E0B),
                     onTap: () {
@@ -195,6 +258,69 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAiAssistantCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E1B4B), Color(0xFF0F172A)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.4)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1).withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.auto_awesome, color: Color(0xFF818CF8), size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Chat with Class (Gemini AI)',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                Text(
+                  'Summarize attendance, ask questions & analyze roster',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () async {
+              final students = await _studentService.getAllStudents();
+              if (context.mounted) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatWithClassScreen(
+                      students: students,
+                      userRole: 'Staff',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text('Open AI', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

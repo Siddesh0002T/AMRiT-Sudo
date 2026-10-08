@@ -6,6 +6,7 @@ import '../core/db/database_helper.dart';
 import '../models/attendance_record.dart';
 import '../models/network_node.dart';
 import '../models/session.dart';
+import 'mysql_api_service.dart';
 import 'student_service.dart';
 
 class AttendanceService extends ChangeNotifier {
@@ -159,6 +160,28 @@ class AttendanceService extends ChangeNotifier {
         await db.insert('attendance', record.toMap());
         recordMap[roll] = record;
       }
+    }
+
+    // 3. Sync to MySQL Database and trigger Early Quit parent alerts
+    try {
+      final recordsJson = recordMap.values.map((r) => {
+        'roll_number': r.rollNumber,
+        'student_name': r.studentName,
+        'status': r.status == 'incomplete' ? 'early_quit' : r.status,
+        'attended_seconds': r.attendedSeconds,
+        'percentage': r.attendancePercentage,
+        'verified': r.fingerprintVerified,
+      }).toList();
+
+      await MySqlApiService.instance.saveAttendanceSession(
+        sessionName: _activeSession!.sessionName,
+        staffUsername: 'staff',
+        startTime: startTime,
+        endTime: endTime,
+        records: recordsJson,
+      );
+    } catch (e) {
+      debugPrint('MySQL session sync background warning: $e');
     }
 
     _activeSession = null;

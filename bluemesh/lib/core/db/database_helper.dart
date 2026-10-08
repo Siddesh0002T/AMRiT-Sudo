@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -41,7 +41,10 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         roll_number TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
-        class_section TEXT
+        class_section TEXT,
+        email TEXT,
+        phone TEXT,
+        is_fingerprint_registered INTEGER DEFAULT 1
       );
     ''');
 
@@ -96,6 +99,17 @@ class DatabaseHelper {
           FOREIGN KEY(session_id) REFERENCES sessions(id)
         );
       ''');
+    }
+    if (oldVersion < 3) {
+      try {
+        await db.execute('ALTER TABLE students ADD COLUMN email TEXT;');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE students ADD COLUMN phone TEXT;');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE students ADD COLUMN is_fingerprint_registered INTEGER DEFAULT 1;');
+      } catch (_) {}
     }
   }
 

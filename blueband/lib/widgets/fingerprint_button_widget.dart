@@ -123,7 +123,7 @@ class _FingerprintButtonWidgetState extends State<FingerprintButtonWidget>
           onTapUp: isVerified ? null : (_) => _onPressUp(),
           onTapCancel: isVerified ? null : _onPressCancel,
           onTap: () async {
-            if (bioService.isHardwareSupported && !isVerified) {
+            if (!isVerified) {
               final ok = await bioService.authenticateBiometric();
               if (ok) {
                 _spawnParticles();

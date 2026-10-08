@@ -10,7 +10,10 @@ import '../services/student_identity_service.dart';
 import '../widgets/fingerprint_button_widget.dart';
 import '../widgets/led_indicator_widget.dart';
 import '../widgets/packet_log_dialog.dart';
+import '../widgets/server_config_dialog.dart';
+import '../services/mysql_api_service.dart';
 import 'identity_settings_dialog.dart';
+import 'student_login_screen.dart';
 
 class BandHomeScreen extends StatefulWidget {
   const BandHomeScreen({super.key});
@@ -92,11 +95,19 @@ class _BandHomeScreenState extends State<BandHomeScreen>
 
     if (bleClient.status == BandConnectionStatus.connectedGreen) {
       await bleClient.disconnect();
+      MySqlApiService.instance.sendStudentPresenceAlert(
+        rollNumber: identity.rollNumber,
+        alertType: 'STUDENT_OUT',
+      );
     } else {
       await bleClient.connectToStaffHost(
         rollNumber: identity.rollNumber,
         studentName: identity.name,
         verified: bioService.isVerified,
+      );
+      MySqlApiService.instance.sendStudentPresenceAlert(
+        rollNumber: identity.rollNumber,
+        alertType: 'STUDENT_IN',
       );
     }
   }
@@ -252,8 +263,31 @@ class _BandHomeScreenState extends State<BandHomeScreen>
             ),
           ],
         ),
-        // LED Status Indicator
-        LedIndicatorWidget(status: bleClient.status),
+        // LED Status Indicator, Server Config & Logout
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.wifi_tethering_rounded, color: Color(0xFF00C8FF), size: 20),
+              tooltip: 'MySQL Server IP / Hotspot',
+              onPressed: () => ServerConfigDialog.show(context),
+            ),
+            LedIndicatorWidget(status: bleClient.status),
+            const SizedBox(width: 6),
+            IconButton(
+              icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
+              tooltip: 'Logout',
+              onPressed: () async {
+                await identity.logout();
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const StudentLoginScreen()),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -381,12 +415,22 @@ class _BandHomeScreenState extends State<BandHomeScreen>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Roll: ${identity.rollNumber}',
+                    'Roll: ${identity.rollNumber} • ${identity.section}',
                     style: TextStyle(
                         color: accentColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w600),
                   ),
+                  if (identity.email.isNotEmpty)
+                    Text(
+                      identity.email,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 ],
               ),
             ),

@@ -36,3 +36,4 @@
 # Keep releases directory
 !releases/
 !releases/**
+.env
