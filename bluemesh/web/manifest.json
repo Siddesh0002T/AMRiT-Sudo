@@ -1,0 +1,35 @@
+{
+    "name": "BlueMesh Staff Attendance & BLE Mesh",
+    "short_name": "BlueMesh Staff",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0F172A",
+    "theme_color": "#0284C7",
+    "description": "Smart BLE Mesh Attendance and Session System for Faculty and Staff.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
