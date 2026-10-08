@@ -39,15 +39,64 @@ class MySqlApiService {
 
   String get _endpoint => EnvConfig.instance.serverBaseUrl.trim();
 
+  List<String> get _candidateUrls {
+    final current = _endpoint;
+    final candidates = [
+      current,
+      'http://localhost:8000/api.php',
+      'http://127.0.0.1:8000/api.php',
+      'http://localhost/bluemesh_api/api.php',
+      'http://127.0.0.1/bluemesh_api/api.php',
+      'http://10.0.2.2:8000/api.php',
+      'http://10.0.2.2/bluemesh_api/api.php',
+      'http://192.168.0.170:8000/api.php',
+      'http://192.168.0.170/bluemesh_api/api.php',
+      'http://192.168.137.1:8000/api.php',
+      'http://192.168.137.1/bluemesh_api/api.php',
+    ];
+    return candidates.toSet().toList();
+  }
+
+  Future<http.Response> _postWithFallback(String action, Map<String, dynamic> body) async {
+    for (final base in _candidateUrls) {
+      try {
+        final uri = Uri.parse('$base?action=$action');
+        final res = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(body),
+        ).timeout(const Duration(seconds: 4));
+
+        if (base != _endpoint) {
+          EnvConfig.instance.setServerBaseUrl(base);
+        }
+        return res;
+      } catch (_) {}
+    }
+    throw Exception('Could not connect to MySQL server.');
+  }
+
+  Future<http.Response> _getWithFallback(String actionQuery) async {
+    for (final base in _candidateUrls) {
+      try {
+        final uri = Uri.parse('$base?action=$actionQuery');
+        final res = await http.get(uri).timeout(const Duration(seconds: 4));
+        if (base != _endpoint) {
+          EnvConfig.instance.setServerBaseUrl(base);
+        }
+        return res;
+      } catch (_) {}
+    }
+    throw Exception('Could not connect to MySQL server.');
+  }
+
   // ==========================================
   // STUDENT SERVICES
   // ==========================================
 
   Future<List<RegisteredStudentProfile>> fetchAllStudents() async {
     try {
-      final uri = Uri.parse('$_endpoint?action=get_students');
-      final response = await http.get(uri).timeout(const Duration(seconds: 6));
-
+      final response = await _getWithFallback('get_students');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['students'] is List) {
@@ -94,15 +143,10 @@ class MySqlApiService {
     required String username,
     required String password,
   }) async {
-    final uri = Uri.parse('$_endpoint?action=guard_login');
-    final response = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': username.trim(),
-        'password': password.trim(),
-      }),
-    ).timeout(const Duration(seconds: 7));
+    final response = await _postWithFallback('guard_login', {
+      'username': username.trim(),
+      'password': password.trim(),
+    });
 
     final data = jsonDecode(response.body);
     if (response.statusCode == 200 && data['success'] == true) {
@@ -113,8 +157,7 @@ class MySqlApiService {
 
   Future<List<Map<String, dynamic>>> fetchZones() async {
     try {
-      final uri = Uri.parse('$_endpoint?action=get_zones');
-      final res = await http.get(uri).timeout(const Duration(seconds: 6));
+      final res = await _getWithFallback('get_zones');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['zones'] is List) {
@@ -140,20 +183,15 @@ class MySqlApiService {
     String message = '',
   }) async {
     try {
-      final uri = Uri.parse('$_endpoint?action=guard_patrol_ping');
-      final res = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'current_zone': currentZone,
-          'status': status,
-          'is_in_zone': isInZone,
-          'battery': battery,
-          'rssi': rssi,
-          'message': message,
-        }),
-      ).timeout(const Duration(seconds: 6));
+      final res = await _postWithFallback('guard_patrol_ping', {
+        'username': username,
+        'current_zone': currentZone,
+        'status': status,
+        'is_in_zone': isInZone,
+        'battery': battery,
+        'rssi': rssi,
+        'message': message,
+      });
 
       if (res.statusCode == 200) {
         return jsonDecode(res.body);
@@ -170,19 +208,14 @@ class MySqlApiService {
 
   Future<void> sendStudentPresenceAlert({
     required String rollNumber,
-    required String alertType, // 'STUDENT_IN' or 'STUDENT_OUT' or 'EARLY_QUIT'
+    required String alertType,
   }) async {
     try {
-      final uri = Uri.parse('$_endpoint?action=log_student_alert');
-      await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'roll_number': rollNumber,
-          'alert_type': alertType,
-          'message': 'Dispatched via BlueBand wristband node.',
-        }),
-      ).timeout(const Duration(seconds: 6));
+      await _postWithFallback('log_student_alert', {
+        'roll_number': rollNumber,
+        'alert_type': alertType,
+        'message': 'Dispatched via BlueBand wristband node.',
+      });
     } catch (e) {
       debugPrint('Error sending presence alert from band: $e');
     }

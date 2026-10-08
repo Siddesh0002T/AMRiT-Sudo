@@ -8,5 +8,35 @@
         "title": "\u26a0\ufe0f URGENT: Kavita Patel Left Class Early (Early Quit Alert)",
         "body": "Dear Parent,\n\nWARNING: Your ward Kavita Patel (Roll No: 23CE999) has disconnected prematurely from the scheduled session before official dismissal at 2026-10-09 00:11:32.\n\nAlert: EARLY QUIT RECORDED.\nPlease contact faculty if this was unplanned.\n\nInstitutional Security System.\n\nAdditional Details: Student disconnected prematurely from class mesh session.",
         "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 00:42:46",
+        "type": "STUDENT_IN",
+        "student": "Aarav Sharma",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Aarav Sharma Checked IN",
+        "body": "Dear Parent,\n\nYour ward Aarav Sharma (Roll No: 23CE001) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 00:42:46.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Triggered via portal.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 00:42:54",
+        "type": "EARLY_QUIT",
+        "student": "Aarav Sharma",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\u26a0\ufe0f URGENT: Aarav Sharma Left Class Early (Early Quit Alert)",
+        "body": "Dear Parent,\n\nWARNING: Your ward Aarav Sharma (Roll No: 23CE001) has disconnected prematurely from the scheduled session before official dismissal at 2026-10-09 00:42:54.\n\nAlert: EARLY QUIT RECORDED.\nPlease contact faculty if this was unplanned.\n\nInstitutional Security System.\n\nAdditional Details: Student left class mesh zone prematurely.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 00:43:08",
+        "type": "STUDENT_OUT",
+        "student": "Aarav Sharma",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83d\udeaa AMRiT Attendance Alert: Aarav Sharma Checked OUT",
+        "body": "Dear Parent,\n\nYour ward Aarav Sharma (Roll No: 23CE001) has checked OUT from the classroom BLE Mesh session at 2026-10-09 00:43:08.\n\nInstitutional Security System.\n\nAdditional Details: Triggered via portal.",
+        "mail_sent": false
     }
 ]

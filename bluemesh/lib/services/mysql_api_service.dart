@@ -11,6 +11,63 @@ class MySqlApiService {
 
   String get _endpoint => EnvConfig.instance.serverBaseUrl.trim();
 
+  // Candidate fallback URLs in case configured URL is unreachable on the current network interface
+  List<String> get _candidateUrls {
+    final current = _endpoint;
+    final candidates = [
+      current,
+      'http://localhost:8000/api.php',
+      'http://127.0.0.1:8000/api.php',
+      'http://localhost/bluemesh_api/api.php',
+      'http://127.0.0.1/bluemesh_api/api.php',
+      'http://10.0.2.2:8000/api.php',
+      'http://10.0.2.2/bluemesh_api/api.php',
+      'http://192.168.0.170:8000/api.php',
+      'http://192.168.0.170/bluemesh_api/api.php',
+      'http://192.168.137.1:8000/api.php',
+      'http://192.168.137.1/bluemesh_api/api.php',
+    ];
+    return candidates.toSet().toList();
+  }
+
+  Future<http.Response> _postWithFallback(String action, Map<String, dynamic> body) async {
+    for (final base in _candidateUrls) {
+      try {
+        final uri = Uri.parse('$base?action=$action');
+        final res = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(body),
+        ).timeout(const Duration(seconds: 4));
+
+        // If server answered (200 or 400 or 401), this endpoint is valid and alive!
+        if (base != _endpoint) {
+          EnvConfig.instance.setServerBaseUrl(base);
+        }
+        return res;
+      } catch (_) {
+        // Try next candidate
+      }
+    }
+    throw Exception('Could not connect to MySQL server. Please verify start_server.bat is running.');
+  }
+
+  Future<http.Response> _getWithFallback(String actionQuery) async {
+    for (final base in _candidateUrls) {
+      try {
+        final uri = Uri.parse('$base?action=$actionQuery');
+        final res = await http.get(uri).timeout(const Duration(seconds: 4));
+        if (base != _endpoint) {
+          EnvConfig.instance.setServerBaseUrl(base);
+        }
+        return res;
+      } catch (_) {
+        // Try next candidate
+      }
+    }
+    throw Exception('Could not connect to MySQL server.');
+  }
+
   // ==========================================
   // 1. ADMIN ACTIONS
   // ==========================================
@@ -19,15 +76,12 @@ class MySqlApiService {
     required String username,
     required String password,
   }) async {
-    // Fast local verification for admin / admin
-    if (username.trim().toLowerCase() == 'admin' && password.trim() == 'admin') {
+    final cleanU = username.trim().toLowerCase();
+    final cleanP = password.trim();
+
+    if (cleanU == 'admin' && cleanP == 'admin') {
       try {
-        final uri = Uri.parse('$_endpoint?action=admin_login');
-        await http.post(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'username': username.trim(), 'password': password.trim()}),
-        ).timeout(const Duration(seconds: 4));
+        await _postWithFallback('admin_login', {'username': username.trim(), 'password': password.trim()});
       } catch (_) {}
       return {
         'success': true,
@@ -36,35 +90,17 @@ class MySqlApiService {
       };
     }
 
-    try {
-      final uri = Uri.parse('$_endpoint?action=admin_login');
-      final res = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username.trim(), 'password': password.trim()}),
-      ).timeout(const Duration(seconds: 6));
-
-      if (res.statusCode == 200) {
-        return jsonDecode(res.body);
-      }
-      final err = jsonDecode(res.body);
-      throw Exception(err['error'] ?? 'Admin authentication failed');
-    } catch (e) {
-      if (username.trim().toLowerCase() == 'admin' && password.trim() == 'admin') {
-        return {
-          'success': true,
-          'role': 'admin',
-          'user': {'username': 'admin', 'name': 'System Administrator'},
-        };
-      }
-      rethrow;
+    final res = await _postWithFallback('admin_login', {'username': username.trim(), 'password': password.trim()});
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body);
     }
+    final err = jsonDecode(res.body);
+    throw Exception(err['error'] ?? 'Admin authentication failed');
   }
 
   Future<List<Map<String, dynamic>>> fetchStaffList() async {
     try {
-      final uri = Uri.parse('$_endpoint?action=get_staff');
-      final res = await http.get(uri).timeout(const Duration(seconds: 6));
+      final res = await _getWithFallback('get_staff');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['staff'] is List) {
@@ -88,20 +124,15 @@ class MySqlApiService {
     String department = 'Computer Science',
     String role = 'Faculty',
   }) async {
-    final uri = Uri.parse('$_endpoint?action=create_staff');
-    final res = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': username.trim(),
-        'password': password.trim(),
-        'name': name.trim(),
-        'email': email.trim(),
-        'phone': phone.trim(),
-        'department': department.trim(),
-        'role': role.trim(),
-      }),
-    ).timeout(const Duration(seconds: 8));
+    final res = await _postWithFallback('create_staff', {
+      'username': username.trim(),
+      'password': password.trim(),
+      'name': name.trim(),
+      'email': email.trim(),
+      'phone': phone.trim(),
+      'department': department.trim(),
+      'role': role.trim(),
+    });
 
     final data = jsonDecode(res.body);
     if (res.statusCode != 200 || data['success'] != true) {
@@ -110,12 +141,7 @@ class MySqlApiService {
   }
 
   Future<void> deleteStaff(dynamic id) async {
-    final uri = Uri.parse('$_endpoint?action=delete_staff');
-    await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'id': id}),
-    ).timeout(const Duration(seconds: 6));
+    await _postWithFallback('delete_staff', {'id': id});
   }
 
   // ==========================================
@@ -126,15 +152,10 @@ class MySqlApiService {
     required String username,
     required String password,
   }) async {
-    final uri = Uri.parse('$_endpoint?action=staff_login');
-    final res = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': username.trim(),
-        'password': password.trim(),
-      }),
-    ).timeout(const Duration(seconds: 7));
+    final res = await _postWithFallback('staff_login', {
+      'username': username.trim(),
+      'password': password.trim(),
+    });
 
     final data = jsonDecode(res.body);
     if (res.statusCode == 200 && data['success'] == true) {
@@ -149,8 +170,7 @@ class MySqlApiService {
 
   Future<List<Student>> fetchStudents() async {
     try {
-      final uri = Uri.parse('$_endpoint?action=get_students');
-      final res = await http.get(uri).timeout(const Duration(seconds: 6));
+      final res = await _getWithFallback('get_students');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['students'] is List) {
@@ -177,22 +197,17 @@ class MySqlApiService {
   }
 
   Future<void> saveStudent(Student s, {String parentName = '', String parentEmail = '', String parentPhone = ''}) async {
-    final uri = Uri.parse('$_endpoint?action=create_student');
-    final res = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'roll_number': s.rollNumber.toUpperCase(),
-        'name': s.name,
-        'class_section': s.classSection,
-        'email': s.email,
-        'phone': s.phone,
-        'is_fingerprint_registered': s.isFingerprintRegistered ? 1 : 0,
-        'parent_name': parentName,
-        'parent_email': parentEmail,
-        'parent_phone': parentPhone,
-      }),
-    ).timeout(const Duration(seconds: 8));
+    final res = await _postWithFallback('create_student', {
+      'roll_number': s.rollNumber.toUpperCase(),
+      'name': s.name,
+      'class_section': s.classSection,
+      'email': s.email,
+      'phone': s.phone,
+      'is_fingerprint_registered': s.isFingerprintRegistered ? 1 : 0,
+      'parent_name': parentName,
+      'parent_email': parentEmail,
+      'parent_phone': parentPhone,
+    });
 
     final data = jsonDecode(res.body);
     if (res.statusCode != 200 || data['success'] != true) {
@@ -201,12 +216,7 @@ class MySqlApiService {
   }
 
   Future<void> deleteStudent(String rollNumber) async {
-    final uri = Uri.parse('$_endpoint?action=delete_student');
-    await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'roll_number': rollNumber}),
-    ).timeout(const Duration(seconds: 6));
+    await _postWithFallback('delete_student', {'roll_number': rollNumber});
   }
 
   // ==========================================
@@ -215,8 +225,7 @@ class MySqlApiService {
 
   Future<List<Map<String, dynamic>>> fetchGuards() async {
     try {
-      final uri = Uri.parse('$_endpoint?action=get_guards');
-      final res = await http.get(uri).timeout(const Duration(seconds: 6));
+      final res = await _getWithFallback('get_guards');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['guards'] is List) {
@@ -236,18 +245,13 @@ class MySqlApiService {
     String phone = '',
     String assignedZone = 'ZONE-A',
   }) async {
-    final uri = Uri.parse('$_endpoint?action=create_guard');
-    final res = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': username.trim(),
-        'password': password.trim(),
-        'name': name.trim(),
-        'phone': phone.trim(),
-        'assigned_zone': assignedZone.trim(),
-      }),
-    ).timeout(const Duration(seconds: 8));
+    final res = await _postWithFallback('create_guard', {
+      'username': username.trim(),
+      'password': password.trim(),
+      'name': name.trim(),
+      'phone': phone.trim(),
+      'assigned_zone': assignedZone.trim(),
+    });
 
     final data = jsonDecode(res.body);
     if (res.statusCode != 200 || data['success'] != true) {
@@ -257,8 +261,7 @@ class MySqlApiService {
 
   Future<List<Map<String, dynamic>>> fetchZones() async {
     try {
-      final uri = Uri.parse('$_endpoint?action=get_zones');
-      final res = await http.get(uri).timeout(const Duration(seconds: 6));
+      final res = await _getWithFallback('get_zones');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['zones'] is List) {
@@ -276,8 +279,7 @@ class MySqlApiService {
 
   Future<List<Map<String, dynamic>>> fetchGuardPatrolLogs() async {
     try {
-      final uri = Uri.parse('$_endpoint?action=get_guard_patrol_logs');
-      final res = await http.get(uri).timeout(const Duration(seconds: 6));
+      final res = await _getWithFallback('get_guard_patrol_logs');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['logs'] is List) {
@@ -294,20 +296,15 @@ class MySqlApiService {
 
   Future<Map<String, dynamic>> logStudentAlert({
     required String rollNumber,
-    required String alertType, // 'STUDENT_IN', 'STUDENT_OUT', 'EARLY_QUIT'
+    required String alertType,
     String message = '',
   }) async {
     try {
-      final uri = Uri.parse('$_endpoint?action=log_student_alert');
-      final res = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'roll_number': rollNumber.toUpperCase(),
-          'alert_type': alertType,
-          'message': message,
-        }),
-      ).timeout(const Duration(seconds: 8));
+      final res = await _postWithFallback('log_student_alert', {
+        'roll_number': rollNumber.toUpperCase(),
+        'alert_type': alertType,
+        'message': message,
+      });
 
       if (res.statusCode == 200) {
         return jsonDecode(res.body);
@@ -320,8 +317,7 @@ class MySqlApiService {
 
   Future<List<Map<String, dynamic>>> fetchAlerts() async {
     try {
-      final uri = Uri.parse('$_endpoint?action=get_alerts');
-      final res = await http.get(uri).timeout(const Duration(seconds: 6));
+      final res = await _getWithFallback('get_alerts');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['alerts'] is List) {
@@ -334,15 +330,14 @@ class MySqlApiService {
 
   Future<Map<String, dynamic>> fetchParentLiveStatus(String rollNumber) async {
     try {
-      final uri = Uri.parse('$_endpoint?action=get_parent_live_status&roll_number=${Uri.encodeComponent(rollNumber)}');
-      final res = await http.get(uri).timeout(const Duration(seconds: 6));
+      final res = await _getWithFallback('get_parent_live_status&roll_number=${Uri.encodeComponent(rollNumber)}');
       if (res.statusCode == 200) {
         return jsonDecode(res.body);
       }
     } catch (e) {
       debugPrint('Error fetching parent live status: $e');
     }
-    return {'success': false, 'error': 'Network timeout'};
+    return {'success': false, 'error': 'Network connection issue'};
   }
 
   // ==========================================
@@ -357,18 +352,13 @@ class MySqlApiService {
     required List<Map<String, dynamic>> records,
   }) async {
     try {
-      final uri = Uri.parse('$_endpoint?action=save_session');
-      await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'session_name': sessionName,
-          'staff_username': staffUsername,
-          'start_time': startTime.toIso8601String(),
-          'end_time': endTime.toIso8601String(),
-          'records': records,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      await _postWithFallback('save_session', {
+        'session_name': sessionName,
+        'staff_username': staffUsername,
+        'start_time': startTime.toIso8601String(),
+        'end_time': endTime.toIso8601String(),
+        'records': records,
+      });
     } catch (e) {
       debugPrint('Error saving attendance session to MySQL: $e');
     }

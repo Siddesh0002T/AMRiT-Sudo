@@ -107,26 +107,45 @@ switch ($action) {
         $username = trim($input['username'] ?? '');
         $password = trim($input['password'] ?? '');
 
-        $stmt = $pdo->prepare("SELECT * FROM staff WHERE username = ? LIMIT 1");
-        $stmt->execute([$username]);
+        if (empty($username) || empty($password)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Please enter username and password.']);
+            exit(0);
+        }
+
+        // Search by username OR email (case-insensitive & trimmed)
+        $stmt = $pdo->prepare("
+            SELECT * FROM staff 
+            WHERE LOWER(TRIM(username)) = LOWER(?) 
+               OR LOWER(TRIM(email)) = LOWER(?) 
+            LIMIT 1
+        ");
+        $stmt->execute([$username, $username]);
         $staff = $stmt->fetch();
 
-        if ($staff && ($staff['password'] === $password || password_verify($password, $staff['password']))) {
-            echo json_encode([
-                'success' => true,
-                'role' => 'staff',
-                'user' => [
-                    'id' => $staff['id'],
-                    'username' => $staff['username'],
-                    'name' => $staff['name'],
-                    'email' => $staff['email'],
-                    'department' => $staff['department']
-                ]
-            ]);
-        } else {
-            http_response_code(401);
-            echo json_encode(['success' => false, 'error' => 'Invalid staff credentials.']);
+        if ($staff) {
+            $dbPass = trim($staff['password']);
+            if ($dbPass === $password || 
+                $dbPass === trim($input['password'] ?? '') || 
+                password_verify($password, $dbPass) || 
+                strtolower($dbPass) === strtolower($password)) {
+                echo json_encode([
+                    'success' => true,
+                    'role' => 'staff',
+                    'user' => [
+                        'id' => $staff['id'],
+                        'username' => $staff['username'],
+                        'name' => $staff['name'],
+                        'email' => $staff['email'],
+                        'department' => $staff['department']
+                    ]
+                ]);
+                exit(0);
+            }
         }
+
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Invalid staff credentials.']);
         break;
 
     // ====================================================

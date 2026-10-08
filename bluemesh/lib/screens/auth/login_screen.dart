@@ -245,20 +245,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Icon(Icons.hub_rounded, size: 54, color: Color(0xFF38BDF8)),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'BlueMesh Staff & Admin',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.1,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: const Text(
+                    'BlueMesh Staff & Admin',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  'Institutional Portal • MySQL & phpMyAdmin Sync',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Institutional Portal • MySQL & phpMyAdmin Sync',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+                  ),
                 ),
                 const SizedBox(height: 32),
 
@@ -302,14 +308,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _staffUserCtrl,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
-                            hintText: 'Staff Username (e.g. staff1)',
+                            labelText: 'Staff Username or Email',
+                            labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
+                            hintText: 'e.g. dev or dev@gmail.com',
                             hintStyle: TextStyle(color: Colors.grey[600]),
                             filled: true,
                             fillColor: const Color(0xFF0F172A),
                             prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF38BDF8)),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           ),
-                          validator: (v) => v == null || v.trim().isEmpty ? 'Enter username' : null,
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Enter username or email' : null,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -317,7 +325,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           obscureText: true,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
-                            hintText: 'Staff Password',
+                            labelText: 'Staff Password',
+                            labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
+                            hintText: 'Enter staff password',
                             hintStyle: TextStyle(color: Colors.grey[600]),
                             filled: true,
                             fillColor: const Color(0xFF0F172A),
