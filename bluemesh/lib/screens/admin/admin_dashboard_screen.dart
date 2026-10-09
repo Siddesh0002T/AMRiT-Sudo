@@ -5,6 +5,7 @@ import '../../services/student_service.dart';
 import '../../widgets/server_config_dialog.dart';
 import '../auth/login_screen.dart';
 import '../parent/parent_portal_screen.dart';
+import '../guard/guard_patrol_monitor_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -423,15 +424,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Staff / Faculty Directory',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text('Total: ${_staffList.length} accounts in MySQL',
-                        style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Staff / Faculty Directory',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('Total: ${_staffList.length} accounts in MySQL',
+                          style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)),
                   icon: const Icon(Icons.add, size: 18, color: Colors.white),
@@ -526,20 +530,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Campus Guards & Patrol Zones',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text('${_guardList.length} Active Guards • ${_zones.length} Explore Zones',
-                        style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Campus Guards & Patrol',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('${_guardList.length} Active Guards • ${_zones.length} Explore Zones',
+                          style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    ],
+                  ),
                 ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
-                  icon: const Icon(Icons.add, size: 18, color: Colors.black),
-                  label: const Text('Add Guard', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                  onPressed: _showCreateGuardDialog,
+                const SizedBox(width: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Guard & Beacon Monitor',
+                      icon: const Icon(Icons.shield_outlined, color: Colors.orangeAccent),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GuardPatrolMonitorScreen())),
+                    ),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
+                      icon: const Icon(Icons.add, size: 18, color: Colors.black),
+                      label: const Text('Add Guard', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                      onPressed: _showCreateGuardDialog,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -664,15 +681,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Student Roster (MySQL)',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text('${_students.length} registered students',
-                        style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Student Roster (MySQL)',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('${_students.length} registered students',
+                          style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
                   icon: const Icon(Icons.family_restroom, size: 18, color: Colors.white),
@@ -745,14 +765,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Live Alerts & Security Events',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text('Student In/Out, Early Quits, and Guard Deviations',
-                        style: TextStyle(color: Colors.white54, fontSize: 12)),
-                  ],
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Live Alerts & Security Events',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('Student In/Out, Early Quits, and Guard Deviations',
+                          style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    ],
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh, color: Colors.white),

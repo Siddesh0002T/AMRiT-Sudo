@@ -203,6 +203,63 @@ class MySqlApiService {
   }
 
   // ==========================================
+  // CAMPUS BLE PATROL BEACONS & ANTI-CHEAT
+  // ==========================================
+
+  Future<List<Map<String, dynamic>>> fetchPatrolBeacons({String? zoneCode}) async {
+    try {
+      final query = (zoneCode != null && zoneCode.isNotEmpty) ? '&zone_code=$zoneCode' : '';
+      final res = await _getWithFallback('get_patrol_beacons$query');
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['beacons'] is List) {
+          return List<Map<String, dynamic>>.from(data['beacons']);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching patrol beacons: $e');
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>> verifyBeaconCheckpoint({
+    required String guardUsername,
+    required String beaconCode,
+    required String zoneCode,
+    required int rssi,
+    String checkpointName = '',
+  }) async {
+    try {
+      final res = await _postWithFallback('verify_beacon_checkpoint', {
+        'guard_username': guardUsername.trim(),
+        'beacon_code': beaconCode.trim(),
+        'zone_code': zoneCode.trim(),
+        'rssi': rssi,
+        'checkpoint_name': checkpointName.trim(),
+      });
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body);
+      }
+    } catch (e) {
+      debugPrint('Error verifying beacon checkpoint: $e');
+    }
+    return {'success': false, 'error': 'Network connection error'};
+  }
+
+  Future<Map<String, dynamic>> fetchGuardPatrolSummary(String guardUsername) async {
+    try {
+      final res = await _getWithFallback('get_guard_patrol_summary&guard_username=$guardUsername');
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching guard patrol summary: $e');
+    }
+    return {'success': false};
+  }
+
+  // ==========================================
   // STUDENT IN/OUT EVENT DISPATCH
   // ==========================================
 

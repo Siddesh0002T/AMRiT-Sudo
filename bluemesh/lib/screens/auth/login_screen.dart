@@ -374,7 +374,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Icon(Icons.shield_rounded, color: Colors.purpleAccent, size: 20),
                         SizedBox(width: 8),
-                        Text('Admin Login (admin / admin)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                        Flexible(
+                          child: Text(
+                            'Admin Login (admin / admin)',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -400,7 +406,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Icon(Icons.family_restroom_rounded, color: Color(0xFF10B981), size: 20),
                         SizedBox(width: 8),
-                        Text('Open Parent Live Portal', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                        Flexible(
+                          child: Text(
+                            'Open Parent Live Portal',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -420,9 +432,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const Icon(Icons.storage_rounded, color: Color(0xFF00FF88), size: 16),
                       const SizedBox(width: 8),
-                      Text(
-                        'Database: MySQL / phpMyAdmin Local Network',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                      Flexible(
+                        child: Text(
+                          'Database: MySQL / phpMyAdmin Local Network',
+                          style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),

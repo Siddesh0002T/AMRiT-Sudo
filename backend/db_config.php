@@ -54,9 +54,10 @@ try {
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$db_name}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
     $pdo->exec("USE `{$db_name}`;");
 
-    // Check if admins table exists; if not, import database_schema.sql
+    // Check if admins table or patrol_beacons table exists; if not, import database_schema.sql
     $stmt = $pdo->query("SHOW TABLES LIKE 'admins'");
-    if ($stmt->rowCount() === 0) {
+    $bStmt = $pdo->query("SHOW TABLES LIKE 'patrol_beacons'");
+    if ($stmt->rowCount() === 0 || $bStmt->rowCount() === 0) {
         $sqlFile = __DIR__ . '/database_schema.sql';
         if (file_exists($sqlFile)) {
             $sqlContent = file_get_contents($sqlFile);

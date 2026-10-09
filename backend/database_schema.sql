@@ -178,3 +178,41 @@ CREATE TABLE IF NOT EXISTS `attendance_records` (
     INDEX (`session_id`),
     INDEX (`roll_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 10. Campus BLE Patrol Beacons (Physical Checkpoints for anti-cheat verification)
+CREATE TABLE IF NOT EXISTS `patrol_beacons` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `beacon_code` VARCHAR(50) NOT NULL UNIQUE,
+    `beacon_uuid` VARCHAR(100) NOT NULL,
+    `zone_code` VARCHAR(50) NOT NULL,
+    `checkpoint_name` VARCHAR(100) NOT NULL,
+    `location_desc` VARCHAR(255) DEFAULT '',
+    `target_rssi` INT DEFAULT -75,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `patrol_beacons` (`beacon_code`, `beacon_uuid`, `zone_code`, `checkpoint_name`, `location_desc`, `target_rssi`)
+VALUES
+('BCN-GATE-01', '0000AAA1-0000-1000-8000-00805F9B0001', 'ZONE-A', 'North Main Gate Checkpoint', 'Main entrance archway and vehicle barrier', -70),
+('BCN-PERIM-02', '0000AAA1-0000-1000-8000-00805F9B0002', 'ZONE-A', 'East Perimeter Wall Pillar', 'Boundary wall checkpoint pole #4', -75),
+('BCN-LAB-03', '0000AAA1-0000-1000-8000-00805F9B0003', 'ZONE-B', 'Science Labs Corridor', 'Physics & Computing lab entrance hallway', -65),
+('BCN-LIB-04', '0000AAA1-0000-1000-8000-00805F9B0004', 'ZONE-B', 'Central Library Foyer', 'Ground floor reading hall entry', -70),
+('BCN-SPRT-05', '0000AAA1-0000-1000-8000-00805F9B0005', 'ZONE-C', 'Sports Complex & Pavilion', 'Outdoor sports arena gate', -80),
+('BCN-CAFE-06', '0000AAA1-0000-1000-8000-00805F9B0006', 'ZONE-C', 'Cafeteria & Food Court', 'Dining arena and rear exit door', -75),
+('BCN-HSTL-07', '0000AAA1-0000-1000-8000-00805F9B0007', 'ZONE-D', 'Hostel Block A Entrance', 'Residential entrance and security desk', -68),
+('BCN-HSTL-08', '0000AAA1-0000-1000-8000-00805F9B0008', 'ZONE-D', 'Night Security Corridor', 'Rear pathway connecting Hostels B & C', -72)
+ON DUPLICATE KEY UPDATE `checkpoint_name` = VALUES(`checkpoint_name`);
+
+-- 11. Guard Beacon Checkpoint Visits (Anti-Cheat Physical Verification)
+CREATE TABLE IF NOT EXISTS `patrol_visits` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `guard_username` VARCHAR(50) NOT NULL,
+    `beacon_code` VARCHAR(50) NOT NULL,
+    `checkpoint_name` VARCHAR(100) NOT NULL,
+    `zone_code` VARCHAR(50) NOT NULL,
+    `rssi` INT NOT NULL,
+    `is_verified` TINYINT(1) DEFAULT 1,
+    `visited_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (`guard_username`),
+    INDEX (`zone_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

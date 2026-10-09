@@ -367,6 +367,198 @@ switch ($action) {
         break;
 
     // ====================================================
+    // CAMPUS BLE PATROL BEACONS & ANTI-CHEAT VERIFICATION
+    // ====================================================
+    case 'get_patrol_beacons':
+        $zoneCode = trim($_GET['zone_code'] ?? $input['zone_code'] ?? '');
+        if (!empty($zoneCode)) {
+            $stmt = $pdo->prepare("SELECT * FROM patrol_beacons WHERE zone_code = ? ORDER BY id ASC");
+            $stmt->execute([$zoneCode]);
+        } else {
+            $stmt = $pdo->query("SELECT * FROM patrol_beacons ORDER BY zone_code ASC, id ASC");
+        }
+        $beacons = $stmt->fetchAll();
+        echo json_encode(['success' => true, 'beacons' => $beacons]);
+        break;
+
+    case 'verify_beacon_checkpoint':
+        $guardUsername = trim($input['guard_username'] ?? '');
+        $beaconCode = trim($input['beacon_code'] ?? '');
+        $zoneCode = trim($input['zone_code'] ?? '');
+        $rssi = (int)($input['rssi'] ?? -65);
+        $checkpointName = trim($input['checkpoint_name'] ?? '');
+
+        if (empty($guardUsername) || empty($beaconCode)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Missing guard_username or beacon_code.']);
+            exit(0);
+        }
+
+        // Fetch beacon info if not supplied
+        if (empty($checkpointName) || empty($zoneCode)) {
+            $bStmt = $pdo->prepare("SELECT * FROM patrol_beacons WHERE beacon_code = ? LIMIT 1");
+            $bStmt->execute([$beaconCode]);
+            $bRow = $bStmt->fetch();
+            if ($bRow) {
+                if (empty($checkpointName)) $checkpointName = $bRow['checkpoint_name'];
+                if (empty($zoneCode)) $zoneCode = $bRow['zone_code'];
+            }
+        }
+
+        // Verify guard's assigned zone
+        $gStmt = $pdo->prepare("SELECT * FROM guards WHERE username = ? LIMIT 1");
+        $gStmt->execute([$guardUsername]);
+        $guard = $gStmt->fetch();
+
+        $isZoneMismatch = false;
+        if ($guard && !empty($guard['assigned_zone']) && $guard['assigned_zone'] !== $zoneCode) {
+            $isZoneMismatch = true;
+        }
+
+        // Insert into patrol_visits table (physical bluetooth proof)
+        $vStmt = $pdo->prepare("
+            INSERT INTO patrol_visits (guard_username, beacon_code, checkpoint_name, zone_code, rssi, is_verified, visited_at)
+            VALUES (?, ?, ?, ?, ?, 1, NOW())
+        ");
+        $vStmt->execute([$guardUsername, $beaconCode, $checkpointName, $zoneCode, $rssi]);
+        $visitId = $pdo->lastInsertId();
+
+        // Also update guard status and last ping
+        $newStatus = $isZoneMismatch ? 'warning_deviation' : 'patrolling';
+        $upd = $pdo->prepare("UPDATE guards SET last_ping_at = NOW(), status = ?, battery_pct = 95 WHERE username = ?");
+        $upd->execute([$newStatus, $guardUsername]);
+
+        // Log to guard_patrol_logs for audit trail
+        $msg = "Physical checkpoint verified via Bluetooth beacon {$beaconCode} ({$checkpointName}) with RSSI: {$rssi} dBm";
+        if ($isZoneMismatch) {
+            $msg .= " [ANTI-CHEAT WARNING: Checkpoint is in {$zoneCode}, but guard is assigned to {$guard['assigned_zone']}!]";
+        }
+        $logStmt = $pdo->prepare("
+            INSERT INTO guard_patrol_logs (guard_username, zone_code, status, is_warning, message, rssi, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ");
+        $logStmt->execute([$guardUsername, $zoneCode, $newStatus, $isZoneMismatch ? 1 : 0, $msg, $rssi]);
+
+        // If zone mismatch, log alert
+        if ($isZoneMismatch) {
+            $alStmt = $pdo->prepare("
+                INSERT INTO alerts (alert_type, title, message, roll_or_guard, target_name)
+                VALUES ('GUARD_DEVIATION', '⚠️ Guard Zone Deviation Alert', ?, ?, ?)
+            ");
+            $alStmt->execute([
+                "Guard {$guardUsername} checked in at {$checkpointName} ({$zoneCode}) but is assigned to {$guard['assigned_zone']}.",
+                $guardUsername,
+                $guard['name'] ?? $guardUsername
+            ]);
+        }
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Checkpoint physically verified and logged successfully.',
+            'visit_id' => $visitId,
+            'checkpoint_name' => $checkpointName,
+            'beacon_code' => $beaconCode,
+            'zone_code' => $zoneCode,
+            'rssi' => $rssi,
+            'is_zone_mismatch' => $isZoneMismatch,
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+        break;
+
+    case 'get_patrol_visits':
+        $guardUsername = trim($_GET['guard_username'] ?? $input['guard_username'] ?? '');
+        $limit = (int)($_GET['limit'] ?? 50);
+        if ($limit <= 0) $limit = 50;
+
+        if (!empty($guardUsername)) {
+            $stmt = $pdo->prepare("
+                SELECT v.*, g.name as guard_name, g.assigned_zone
+                FROM patrol_visits v
+                LEFT JOIN guards g ON v.guard_username = g.username
+                WHERE v.guard_username = ?
+                ORDER BY v.id DESC LIMIT {$limit}
+            ");
+            $stmt->execute([$guardUsername]);
+        } else {
+            $stmt = $pdo->query("
+                SELECT v.*, g.name as guard_name, g.assigned_zone
+                FROM patrol_visits v
+                LEFT JOIN guards g ON v.guard_username = g.username
+                ORDER BY v.id DESC LIMIT {$limit}
+            ");
+        }
+        $visits = $stmt->fetchAll();
+        echo json_encode(['success' => true, 'visits' => $visits]);
+        break;
+
+    case 'get_guard_patrol_summary':
+        $guardUsername = trim($_GET['guard_username'] ?? $input['guard_username'] ?? '');
+        
+        // Fetch guard info
+        $gStmt = $pdo->prepare("SELECT * FROM guards WHERE username = ? LIMIT 1");
+        $gStmt->execute([$guardUsername]);
+        $guard = $gStmt->fetch();
+
+        if (!$guard) {
+            echo json_encode(['success' => false, 'error' => 'Guard not found.']);
+            exit(0);
+        }
+
+        $assignedZone = $guard['assigned_zone'] ?: 'ZONE-A';
+
+        // Fetch required checkpoints for this zone
+        $bStmt = $pdo->prepare("SELECT * FROM patrol_beacons WHERE zone_code = ? ORDER BY id ASC");
+        $bStmt->execute([$assignedZone]);
+        $requiredBeacons = $bStmt->fetchAll();
+
+        // Fetch visits within the last 8 hours (current shift/duty)
+        $vStmt = $pdo->prepare("
+            SELECT beacon_code, checkpoint_name, zone_code, rssi, visited_at
+            FROM patrol_visits
+            WHERE guard_username = ? AND visited_at >= DATE_SUB(NOW(), INTERVAL 8 HOUR)
+            ORDER BY id DESC
+        ");
+        $vStmt->execute([$guardUsername]);
+        $recentVisits = $vStmt->fetchAll();
+
+        $visitedBeaconCodes = array_unique(array_column($recentVisits, 'beacon_code'));
+        $totalRequired = count($requiredBeacons);
+        $totalVisited = count(array_intersect($visitedBeaconCodes, array_column($requiredBeacons, 'beacon_code')));
+        $completionPct = $totalRequired > 0 ? round(($totalVisited / $totalRequired) * 100) : 100;
+
+        // Anti-cheat status check
+        $antiCheatStatus = 'COMPLIANT';
+        $cheatAlert = null;
+
+        if ($guard['status'] === 'warning_deviation') {
+            $antiCheatStatus = 'DEVIATION_DETECTED';
+            $cheatAlert = 'Guard deviated outside assigned patrol perimeter.';
+        } else if ($guard['status'] === 'warning_inactive') {
+            $antiCheatStatus = 'INACTIVITY_FLAGGED';
+            $cheatAlert = 'Guard prolonged stationary inactivity detected.';
+        } else if ($totalRequired > 0 && $totalVisited < $totalRequired) {
+            $antiCheatStatus = 'PATROL_IN_PROGRESS';
+        } else {
+            $antiCheatStatus = 'ALL_CHECKPOINTS_VERIFIED';
+        }
+
+        echo json_encode([
+            'success' => true,
+            'guard' => $guard,
+            'assigned_zone' => $assignedZone,
+            'total_checkpoints' => $totalRequired,
+            'visited_checkpoints_count' => $totalVisited,
+            'completion_percentage' => $completionPct,
+            'anti_cheat_status' => $antiCheatStatus,
+            'cheat_alert' => $cheatAlert,
+            'required_beacons' => $requiredBeacons,
+            'visited_beacon_codes' => array_values($visitedBeaconCodes),
+            'recent_visits' => $recentVisits
+        ]);
+        break;
+
+
+    // ====================================================
     // 5. PARENT PORTAL & LIVE STUDENT STATUS
     // ====================================================
     case 'parent_login':

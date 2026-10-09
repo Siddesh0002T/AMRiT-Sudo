@@ -79,12 +79,14 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
 
     if (mounted) {
       await _loadStudentStatus(roll);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$type alert triggered and parent email dispatched!'),
-          backgroundColor: type == 'EARLY_QUIT' ? Colors.redAccent : Colors.teal,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$type alert triggered and parent email dispatched!'),
+            backgroundColor: type == 'EARLY_QUIT' ? Colors.redAccent : Colors.teal,
+          ),
+        );
+      }
     }
   }
 

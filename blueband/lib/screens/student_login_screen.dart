@@ -418,9 +418,12 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     children: [
                       const Icon(Icons.storage_rounded, color: Color(0xFF00FF88), size: 16),
                       const SizedBox(width: 8),
-                      Text(
-                        'Synced with MySQL / phpMyAdmin Local API',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                      Flexible(
+                        child: Text(
+                          'Synced with MySQL / phpMyAdmin Local API',
+                          style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
