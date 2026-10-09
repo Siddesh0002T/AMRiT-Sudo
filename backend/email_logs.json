@@ -38,5 +38,165 @@
         "title": "\ud83d\udeaa AMRiT Attendance Alert: Aarav Sharma Checked OUT",
         "body": "Dear Parent,\n\nYour ward Aarav Sharma (Roll No: 23CE001) has checked OUT from the classroom BLE Mesh session at 2026-10-09 00:43:08.\n\nInstitutional Security System.\n\nAdditional Details: Triggered via portal.",
         "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 06:45:01",
+        "type": "STUDENT_IN",
+        "student": "Aarav Sharma",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Aarav Sharma Checked IN",
+        "body": "Dear Parent,\n\nYour ward Aarav Sharma (Roll No: 23CE001) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 06:45:01.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 06:45:07",
+        "type": "STUDENT_IN",
+        "student": "Aditi Verma",
+        "roll": "23CE002",
+        "to": "parent.aditi@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Aditi Verma Checked IN",
+        "body": "Dear Parent,\n\nYour ward Aditi Verma (Roll No: 23CE002) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 06:45:07.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 06:45:09",
+        "type": "STUDENT_IN",
+        "student": "Aditi Verma",
+        "roll": "23CE002",
+        "to": "parent.aditi@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Aditi Verma Checked IN",
+        "body": "Dear Parent,\n\nYour ward Aditi Verma (Roll No: 23CE002) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 06:45:09.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 06:46:11",
+        "type": "STUDENT_IN",
+        "student": "Aditi Verma",
+        "roll": "23CE002",
+        "to": "parent.aditi@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Aditi Verma Checked IN",
+        "body": "Dear Parent,\n\nYour ward Aditi Verma (Roll No: 23CE002) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 06:46:11.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 06:46:20",
+        "type": "STUDENT_OUT",
+        "student": "Aditi Verma",
+        "roll": "23CE002",
+        "to": "parent.aditi@example.com",
+        "title": "\ud83d\udeaa AMRiT Attendance Alert: Aditi Verma Checked OUT",
+        "body": "Dear Parent,\n\nYour ward Aditi Verma (Roll No: 23CE002) has checked OUT from the classroom BLE Mesh session at 2026-10-09 06:46:20.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:15:57",
+        "type": "STUDENT_IN",
+        "student": "Aarav Sharma",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Aarav Sharma Checked IN",
+        "body": "Dear Parent,\n\nYour ward Aarav Sharma (Roll No: 23CE001) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 07:15:57.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:16:50",
+        "type": "STUDENT_IN",
+        "student": "Aarav Sharma",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Aarav Sharma Checked IN",
+        "body": "Dear Parent,\n\nYour ward Aarav Sharma (Roll No: 23CE001) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 07:16:50.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:21:32",
+        "type": "STUDENT_IN",
+        "student": "Aarav Sharma",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Aarav Sharma Checked IN",
+        "body": "Dear Parent,\n\nYour ward Aarav Sharma (Roll No: 23CE001) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 07:21:32.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:25:03",
+        "type": "STUDENT_IN",
+        "student": "siddheh more",
+        "roll": "23CE002",
+        "to": "parent.aditi@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: siddheh more Checked IN",
+        "body": "Dear Parent,\n\nYour ward siddheh more (Roll No: 23CE002) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 07:25:03.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:25:15",
+        "type": "STUDENT_IN",
+        "student": "Om Bachhav ",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Om Bachhav  Checked IN",
+        "body": "Dear Parent,\n\nYour ward Om Bachhav  (Roll No: 23CE001) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 07:25:15.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:25:30",
+        "type": "STUDENT_IN",
+        "student": "siddheh more",
+        "roll": "23CE002",
+        "to": "parent.aditi@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: siddheh more Checked IN",
+        "body": "Dear Parent,\n\nYour ward siddheh more (Roll No: 23CE002) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 07:25:30.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:25:54",
+        "type": "STUDENT_OUT",
+        "student": "Om Bachhav ",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83d\udeaa AMRiT Attendance Alert: Om Bachhav  Checked OUT",
+        "body": "Dear Parent,\n\nYour ward Om Bachhav  (Roll No: 23CE001) has checked OUT from the classroom BLE Mesh session at 2026-10-09 07:25:54.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:25:56",
+        "type": "STUDENT_OUT",
+        "student": "Om Bachhav ",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83d\udeaa AMRiT Attendance Alert: Om Bachhav  Checked OUT",
+        "body": "Dear Parent,\n\nYour ward Om Bachhav  (Roll No: 23CE001) has checked OUT from the classroom BLE Mesh session at 2026-10-09 07:25:56.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:26:01",
+        "type": "STUDENT_IN",
+        "student": "siddheh more",
+        "roll": "23CE002",
+        "to": "parent.aditi@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: siddheh more Checked IN",
+        "body": "Dear Parent,\n\nYour ward siddheh more (Roll No: 23CE002) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 07:26:01.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:26:56",
+        "type": "STUDENT_IN",
+        "student": "Om Bachhav ",
+        "roll": "23CE001",
+        "to": "parent.aarav@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: Om Bachhav  Checked IN",
+        "body": "Dear Parent,\n\nYour ward Om Bachhav  (Roll No: 23CE001) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 07:26:56.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
+    },
+    {
+        "timestamp": "2026-10-09 07:26:58",
+        "type": "STUDENT_IN",
+        "student": "siddheh more",
+        "roll": "23CE002",
+        "to": "parent.aditi@example.com",
+        "title": "\ud83c\udfeb AMRiT Attendance Alert: siddheh more Checked IN",
+        "body": "Dear Parent,\n\nYour ward siddheh more (Roll No: 23CE002) has successfully checked IN to the classroom BLE Mesh session at 2026-10-09 07:26:58.\n\nStatus: PRESENT & VERIFIED.\n\nInstitutional Security System.\n\nAdditional Details: Dispatched via BlueBand wristband node.",
+        "mail_sent": false
     }
 ]
