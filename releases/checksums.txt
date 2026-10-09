@@ -1,0 +1,5 @@
+# BlueMesh System v1.0.0 Release Hashes (SHA-256)
+# Generated: 2026-09-05
+
+cf21b9e5f9552b06e8daba2d0d55cd754a3399b9a15c5da44d487618064b75a8  BlueMesh-Staff-v1.0.0.apk (48.82 MB)
+8d4b4570a9dcee4a540dfbb69738d1950e387b7eb4d6cf122d87c944bb122b10  BlueBand-Student-v1.0.0.apk (46.31 MB)
